@@ -1,0 +1,97 @@
+.email_icon{
+    width: 20px;
+    height: 16px;
+}
+
+.password_icon{
+    width: 24px;
+    height: 20px;
+}
+
+.container {
+  max-width: 400px;
+  margin: 150px auto;
+  align-items: center;
+  padding: 36px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.header {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 24px 0;
+}
+
+.subtitle a {
+  color: #2168ff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+
+.inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* The colored box that holds both the icon and the borderless input */
+.input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 50px;
+  background-color: #EAF4F4; /* Soft colored box (change to #eaeaea for gray) */
+  border-radius: 10px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+
+/* Completely borderless input inside the colored box */
+.input input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.input input::placeholder {
+  color: #64748b;
+}
+
+.button{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 25px;
+    color: #fff;
+    background: #6B9080;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.error-text {
+  color: #dc2626;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 14px;
+}
+
