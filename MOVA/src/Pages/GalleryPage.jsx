@@ -11,7 +11,7 @@ export default function GalleryPage() {
   const [error, setError] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
 
-  const loadingRef = useRef(false);  
+  const loadingRef = useRef(false);   
   const sentinelRef = useRef(null);   
 
   const loadMore = useCallback(async () => {
@@ -54,7 +54,7 @@ export default function GalleryPage() {
       (entries) => {
         if (entries[0].isIntersecting) loadMore();
       },
-      { rootMargin: "300px" }
+      { rootMargin: "300px" } 
     );
 
     observer.observe(el);
@@ -70,39 +70,30 @@ export default function GalleryPage() {
   }, []);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Community Gallery</h1>
+    <div className="container gallery">
+      <h1 className="header">Community Gallery</h1>
+      <p className="subtitle">Scroll to see more.</p>
 
       {images.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: 20,
-          }}
-        >
+        <div className="gallery-grid">
           {images.map((image) => (
             <div
               key={image.image_key}
+              className="gallery-item"
               onClick={() => setSelectedImage(image)}
-              style={{ cursor: "pointer" }}
             >
               <img
                 src={image.url}
                 alt={image.title || "Community upload"}
                 loading="lazy"
-                style={{
-                  width: "100%",
-                  height: 180,
-                  objectFit: "cover",
-                  borderRadius: 8,
-                  background: "#ddd",
-                }}
+                className="gallery-thumb"
               />
-              <strong>{image.title || "Untitled"}</strong>
-              <p style={{ fontSize: 12, marginTop: 4 }}>
-                {image.description || "No description provided."}
-              </p>
+              <div className="gallery-info">
+                <h3 className="gallery-title">{image.title || "Untitled"}</h3>
+                <p className="gallery-desc">
+                  {image.description || "No description provided."}
+                </p>
+              </div>
             </div>
           ))}
         </div>
@@ -110,49 +101,26 @@ export default function GalleryPage() {
 
       <div ref={sentinelRef} style={{ height: 1 }} />
 
-      {loading && <p>Loading images...</p>}
+      {loading && <p className="status-text">Loading images...</p>}
 
       {error && (
-        <p style={{ color: "red" }}>
-          {error} <button onClick={loadMore}>Try again</button>
+        <p className="error-text">
+          {error}{" "}
+          <button className="button wide" onClick={loadMore}>Try again</button>
         </p>
       )}
 
       {!loading && !error && images.length === 0 && !hasMore && (
-        <p>No images have been shared yet.</p>
+        <p className="status-text">No images have been shared yet.</p>
       )}
 
       {selectedImage && (
-        <div
-          onClick={() => setSelectedImage(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.85)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            padding: 20,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: "relative",
-              background: "#fff",
-              borderRadius: 12,
-              maxWidth: 900,
-              width: "100%",
-              maxHeight: "90vh",
-              overflow: "auto",
-              padding: 20,
-            }}
-          >
+        <div className="modal-overlay" onClick={() => setSelectedImage(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
             <button
+              className="modal-close"
               onClick={() => setSelectedImage(null)}
               aria-label="Close"
-              style={{ position: "absolute", top: 10, right: 10 }}
             >
               ✕
             </button>
@@ -160,10 +128,10 @@ export default function GalleryPage() {
             <img
               src={selectedImage.url}
               alt={selectedImage.title || "Selected upload"}
-              style={{ width: "100%", maxHeight: "65vh", objectFit: "contain" }}
+              className="modal-img"
             />
-            <h2>{selectedImage.title}</h2>
-            <p>{selectedImage.description}</p>
+            <h2 className="header">{selectedImage.title}</h2>
+            <p className="subtitle">{selectedImage.description}</p>
           </div>
         </div>
       )}

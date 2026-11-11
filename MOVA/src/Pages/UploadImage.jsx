@@ -71,7 +71,6 @@ export default function UploadImage() {
 
       setMessage("Image uploaded successfully!");
 
-      // Clear the form
       setSelectedFile(null);
       setTitle("");
       setDescription("");
@@ -89,64 +88,60 @@ export default function UploadImage() {
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Share</h1>
-      <p>Share your workout with the community!</p>
+    <div className="container">
+      <h1 className="header">Share</h1>
+      <p className="subtitle">Share your workout with the community!</p>
 
-      <form onSubmit={handleUpload} style={{ maxWidth: 600 }}>
-        <label htmlFor="image-upload"><strong>Choose an image</strong></label>
-        <br />
-        <input
-          id="image-upload"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={handleFileChange}
-        />
-
-        {preview && (
-          <div style={{ margin: "15px 0" }}>
-            <img
-              src={preview}
-              alt="Upload preview"
-              style={{ maxWidth: "100%", maxHeight: 250, objectFit: "contain" }}
+      <form onSubmit={handleUpload}>
+        <div className="inputs">
+          <div>
+            <label htmlFor="image-upload" className="field-label">Choose an image</label>
+            <input
+              id="image-upload"
+              className="file-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileChange}
             />
           </div>
-        )}
 
-        <div style={{ margin: "15px 0" }}>
-          <label htmlFor="title"><strong>Title</strong></label>
-          <br />
-          <input
-            id="title"
-            type="text"
-            placeholder="Give it a title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={100}
-            style={{ width: "100%" }}
-          />
+          {preview && (
+            <img src={preview} alt="Upload preview" className="preview" />
+          )}
+
+          <div className="input">
+            <input
+              type="text"
+              placeholder="Title"
+              aria-label="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={100}
+            />
+          </div>
+
+          <div className="input textarea">
+            <textarea
+              placeholder="Enter a short description"
+              aria-label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={1000}
+            />
+          </div>
         </div>
 
-        <div style={{ margin: "15px 0" }}>
-          <label htmlFor="description"><strong>Description</strong></label>
-          <br />
-          <textarea
-            id="description"
-            placeholder="Enter a short description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={1000}
-            style={{ width: "100%", minHeight: 90 }}
-          />
-        </div>
-
-        <button type="submit" disabled={!selectedFile || uploading}>
+        <button
+          type="submit"
+          className="button wide"
+          disabled={!selectedFile || uploading}
+        >
           {uploading ? "Uploading..." : "Upload Image"}
         </button>
       </form>
 
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {message && <p className="success-text">{message}</p>}
+      {error && <p className="error-text">{error}</p>}
     </div>
   );
 }
