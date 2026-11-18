@@ -12,6 +12,7 @@ export default function Navbar() {
       <NavLink to="/" end className={linkClass}>Home</NavLink>
       <NavLink to="/share" className={linkClass}>Share</NavLink>
       <NavLink to="/view" className={linkClass}>View</NavLink>
+      <NavLink to="/exercise" className={linkClass}>Track Exercise</NavLink>
 
       <button type="button" className="nav-signout" onClick={signOut}>
         Sign out

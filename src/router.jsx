@@ -6,6 +6,7 @@ import PrivateRoute from "./components/PrivateRoute.jsx";
 import HomePage from "./pages/HomePage";
 import UploadImage from "./pages/UploadImage";
 import GalleryPage from "./pages/GalleryPage";
+import ExerciseTracker from "./pages/ExerciseTracker"
 
 export const router = createBrowserRouter([
   { path: "/signup", element: <Signup /> },
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "share", element: <UploadImage /> },
       { path: "view", element: <GalleryPage /> },
+      { path: "exercise", element: <ExerciseTracker/> }
     ],
   },
 
