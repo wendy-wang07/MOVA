@@ -1,66 +1,97 @@
-import React from 'react'
 import { useEffect, useRef, useState } from "react";
 import { UserAuth } from "../context/AuthContext.jsx";
 import { supabase } from "../supabaseClient.js";
 import "./ChatPage.css";
 
-function ChatPage() {
-    const { session } = UserAuth();
-    const [activeTab, setActiveTab] = useState("community")
-
-    // 1. Separate message lists for Community and AI
-    const [communityMessages, setCommunityMessages] = useState([]);
-    const [aiMessages, setAiMessages] = useState([
+export default function ChatPage() {
+  const { session } = UserAuth();
+  const [activeTab, setActiveTab] = useState("community");
+  const [communityMessages, setCommunityMessages] = useState([]);
+  const [aiMessages, setAiMessages] = useState([
     {
       sender: "MOVA AI",
       userId: "ai-bot",
       text: "Hi! Ask me anything about MOVA.",
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     },
-    ]);
-
-  // 2. Tracks whatever you are currently typing in the input box
-     const [newMessage, setNewMessage] = useState("");
-
-  // Get your display name (or email prefix if display_name isn't set yet)
-    const myName =
-        session?.user?.user_metadata?.display_name ||
-        session?.user?.email?.split("@")[0] ||
-        "You";
-
-    const [onlineUsers, setOnlineUsers] = useState([]);
+  ]);
+  const [newMessage, setNewMessage] = useState("");
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [isAiTyping, setIsAiTyping] = useState(false);
   const chatEndRef = useRef(null);
 
-  // Connect to Supabase Realtime room for Community Chat
+  const username =
+    session?.user?.user_metadata?.username ||
+    session?.user?.user_metadata?.display_name ||
+    session?.user?.email?.split("@")[0] ||
+    "User";
+
+  // 1. Load past messages & listen for new messages + online users
   useEffect(() => {
     if (!session?.user) return;
 
+    const fetchMessages = async () => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("Error loading messages:", error.message);
+      } else if (data) {
+        const loadedMessages = data.map((row) => ({
+          sender: row.sender,
+          userId: row.user_id,
+          text: row.text,
+          time: new Date(row.created_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }));
+        setCommunityMessages(loadedMessages);
+      }
+    };
+
+    fetchMessages();
+
     const channel = supabase.channel("mova-community", {
       config: {
-        broadcast: {self: true },
         presence: { key: session.user.id },
       },
     });
 
-    // Listen for new messages from anyone in the room
-    channel.on("broadcast", { event: "message" }, ({ payload }) => {
-      setCommunityMessages((prev) => [...prev, payload]);
-    });
+    channel.on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "messages" },
+      (payload) => {
+        const row = payload.new;
+        const incomingMsg = {
+          sender: row.sender,
+          userId: row.user_id,
+          text: row.text,
+          time: new Date(row.created_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+        setCommunityMessages((prev) => [...prev, incomingMsg]);
+      }
+    );
 
-    // Listen for users joining/leaving to update the Online sidebar
     channel.on("presence", { event: "sync" }, () => {
       const state = channel.presenceState();
-      // Extract each online user's info (name & id)
       const usersList = Object.values(state).map((presences) => presences[0]);
       setOnlineUsers(usersList);
     });
 
-    // Join the channel and announce our name
     channel.subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
         await channel.track({
           userId: session.user.id,
-          name: myName,
+          name: username,
         });
       }
     });
@@ -68,46 +99,79 @@ function ChatPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-    }, [session, myName]);
+  }, [session, username]);
 
-    // Auto-scroll to the bottom when messages update
-     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [communityMessages, aiMessages, activeTab]);
+  // 2. Auto-scroll to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [communityMessages, aiMessages, activeTab]);
 
-  // 3. Runs when you submit the form
-    const handleSendMessage = async (e) => {
-        e.preventDefault(); // Prevents the browser from refreshing the page
-        if (!newMessage.trim()) return; // Ignores empty/space-only messages
+  // 3. Send Message Handler
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
 
-    const msgObject = {
-      sender: myName,
-      userId: session?.user?.id,
-      text: newMessage,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
+    const textToSend = newMessage;
+    setNewMessage("");
 
-    // Add the message to whichever channel is currently open
     if (activeTab === "community") {
-      await supabase.channel("mova-community").send({
-        type: "broadcast",
-        event: "message",
-        payload: msgObject,
-      });
+      const { error } = await supabase.from("messages").insert([
+        {
+          user_id: session?.user?.id,
+          sender: username,
+          text: textToSend,
+        },
+      ]);
+
+      if (error) {
+        console.error("Error sending message:", error.message);
+      }
     } else {
+      const msgObject = {
+        sender: username,
+        userId: session?.user?.id,
+        text: textToSend,
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
       setAiMessages((prev) => [...prev, msgObject]);
+      setIsAiTyping(true);
+
+      try {
+        const res = await fetch("http://127.0.0.1:5000/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: textToSend }),
+        });
+        const data = await res.json();
+
+        setAiMessages((prev) => [
+          ...prev,
+          {
+            sender: "MOVA AI",
+            userId: "ai-bot",
+            text: data.reply || "Sorry, something went wrong.",
+            time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          },
+        ]);
+      } catch (err) {
+        console.error("AI chat error:", err);
+      } finally {
+        setIsAiTyping(false);
+      }
     }
+  };
 
-    setNewMessage(""); // Clears the input box after sending
-    };
-
-  // Pick which list of messages to display on screen
-    const currentMessages =
+  const currentMessages =
     activeTab === "community" ? communityMessages : aiMessages;
 
-
-    return (
-        <div className="chat-page-wrapper">
+  return (
+    <div className="chat-page-wrapper">
       <div className="chat-box">
         {/* LEFT SIDEBAR */}
         <div className="chat-sidebar">
@@ -133,20 +197,25 @@ function ChatPage() {
 
           {activeTab === "community" && (
             <div className="online-section">
-                <div className="sidebar-title">Online — {onlineUsers.length}</div>
-                    {onlineUsers.map((user, idx) => (
-                        <p key={idx} className="online-user">
-                        🟢 {user.name}
-                        </p>
-                    ))}
+              <div className="sidebar-title">Online — {onlineUsers.length}</div>
+              {onlineUsers.map((user, idx) => (
+                <p key={idx} className="online-user">
+                  🟢 {user.name}
+                </p>
+              ))}
             </div>
           )}
         </div>
 
         {/* RIGHT MAIN AREA */}
         <div className="chat-main">
-          <div className="chat-header">
-            {activeTab === "community" ? "# Community Chat" : "# AI Assistant"}
+          <div className="chat-header" style={{ justifyContent: "space-between" }}>
+            <span>
+              {activeTab === "community" ? "# Community Chat" : "# AI Assistant"}
+            </span>
+            <span style={{ fontSize: "13px", color: "#6b7280", fontWeight: "normal" }}>
+              Signed in as: <strong>{username}</strong>
+            </span>
           </div>
 
           <div className="chat-messages">
@@ -170,6 +239,12 @@ function ChatPage() {
                 </div>
               );
             })}
+            {activeTab === "ai" && isAiTyping && (
+           <p style={{ color: "#9ca3af", fontSize: "13px", fontStyle: "italic" }}>
+             MOVA AI is typing...
+           </p>
+            )}
+            <div ref={chatEndRef} />
           </div>
 
           <form onSubmit={handleSendMessage} className="chat-input-form">
@@ -193,5 +268,3 @@ function ChatPage() {
     </div>
   );
 }
-
-export default ChatPage

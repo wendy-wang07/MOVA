@@ -5,6 +5,9 @@ import os
 import time
 import json
 from dotenv import load_dotenv
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
 # Load environment variables from .env
 load_dotenv()
@@ -36,6 +39,12 @@ s3 = boto3.client(
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
     region_name=AWS_REGION
+)
+
+# Connect to Gemini AI
+ai_client = genai.Client(
+    api_key=os.getenv("GEMINI_API_KEY"),
+    http_options=types.HttpOptions(timeout=10000),  # 8 seconds in milliseconds
 )
 
 
@@ -211,6 +220,30 @@ def get_images():
             "details": str(e)
         }), 500
 
+
+@app.route("/api/chat", methods=["POST"])
+def ai_chat():
+    data = request.get_json()
+    user_message = data.get("message", "")
+
+    if not user_message:
+        return jsonify({"reply": "Please enter a message."}), 400
+
+    for model_name in ["gemini-3.5-flash-lite", "gemini-3.8-flash"]:
+        try:
+            response = ai_client.models.generate_content(
+                model=model_name,
+                contents=user_message,
+                config=types.GenerateContentConfig(
+                    system_instruction="You are MOVA AI, a friendly, helpful assistant for the MOVA photo-sharing community. Keep answers clear and concise (2-4 sentences unless asked for more).",
+                    max_output_tokens=200,
+                ),
+            )
+            return jsonify({"reply": response.text}), 200
+        except Exception as e:
+            print(f"Model {model_name} failed:", e)
+
+    return jsonify({"reply": "MOVA AI is busy right now—please try again in a moment!"}), 503
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True)
