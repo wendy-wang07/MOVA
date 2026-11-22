@@ -407,3 +407,10 @@ button.nav-link {
   background: #EAF4F4;
   color: #1e293b;
 }
+
+.gallery-user {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B9080;
+  margin: 0 0 6px 0;
+}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { API_URL } from "../config";
+import { UserAuth } from "../context/AuthContext.jsx";
 
 export default function UploadImage() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -57,6 +58,7 @@ export default function UploadImage() {
       formData.append("image", selectedFile);
       formData.append("title", title);
       formData.append("description", description);
+      formData.append("username", username);
 
       const response = await fetch(`${API_URL}/upload-image`, {
         method: "POST",

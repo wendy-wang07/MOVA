@@ -83,6 +83,7 @@ def upload_image():
 
         title = request.form.get("title", "").strip() or "Untitled"
         description = request.form.get("description", "")
+        username = request.form.get("username", "").strip()[:50]
 
       
         timestamp = int(time.time())
@@ -105,6 +106,7 @@ def upload_image():
         metadata = {
             "title": title,
             "description": description,
+            "username": username,
             "image_key": image_key,
             "uploaded_at": timestamp
         }
@@ -187,6 +189,7 @@ def get_images():
                     "image_key": metadata["image_key"],
                     "title": metadata.get("title", "Untitled"),
                     "description": metadata.get("description", ""),
+                    "username": metadata.get("username", ""),
                     "url": image_url,
                     "uploaded_at": metadata.get("uploaded_at", 0)
                 })
