@@ -43,7 +43,7 @@ export default function GalleryPage() {
     } finally {
       loadingRef.current = false;
       setLoading(false);
-    }
+    } 
   }, [offset, hasMore]);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function GalleryPage() {
               />
               <div className="gallery-info">
                 <h3 className="gallery-title">{image.title || "Untitled"}</h3>
-                <p className="gallery-user">@{image.username || "Anonymous"}</p>
+                <p className="gallery-user">@{image.username}</p>
                 <p className="gallery-desc">
                   {image.description || "No description provided."}
                 </p>
