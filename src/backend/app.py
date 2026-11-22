@@ -26,10 +26,8 @@ ALLOWED_TYPES = {
     "image/webp": "webp"
 }
 
-# Maximum image size: 5 MB
 MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
-# Check that the S3 bucket is configured
 if not S3_BUCKET:
     raise ValueError("S3_BUCKET is missing from your .env file")
 
@@ -58,7 +56,6 @@ def home():
 @app.route("/upload-image", methods=["POST"])
 def upload_image():
     try:
-        # Check if image exists
         if "image" not in request.files:
             return jsonify({"error": "No image file provided"}), 400
 
@@ -67,7 +64,6 @@ def upload_image():
         if not file.filename:
             return jsonify({"error": "No image selected"}), 400
 
-        # Check image format
         content_type = file.mimetype
 
         if content_type not in ALLOWED_TYPES:
@@ -75,7 +71,6 @@ def upload_image():
                 "error": "Unsupported image format. Use JPG, PNG, or WEBP."
             }), 400
 
-        # Check image size
         file.seek(0, os.SEEK_END)
         file_size = file.tell()
         file.seek(0)
@@ -86,12 +81,10 @@ def upload_image():
         if file_size == 0:
             return jsonify({"error": "The uploaded image is empty"}), 400
 
-        # Get title and description
         title = request.form.get("title", "").strip() or "Untitled"
         description = request.form.get("description", "")
 
-        # Generate unique filename
-        # (timestamp first, so keys sort in upload order)
+      
         timestamp = int(time.time())
         image_id = f"{timestamp}_{os.urandom(4).hex()}"
 
@@ -164,7 +157,6 @@ def get_images():
         limit = min(max(request.args.get("limit", 12, type=int), 1), 50)
         offset = max(request.args.get("offset", 0, type=int), 0)
 
-        # 1) List only the metadata keys (cheap - no file downloads yet)
         metadata_keys = []
         paginator = s3.get_paginator("list_objects_v2")
 
@@ -173,14 +165,11 @@ def get_images():
                 if item["Key"].endswith(".json"):
                     metadata_keys.append(item["Key"])
 
-        # 2) Keys start with a unix timestamp, so sorting the keys
-        #    in reverse gives newest first
         metadata_keys.sort(reverse=True)
 
         total = len(metadata_keys)
         page_keys = metadata_keys[offset:offset + limit]
 
-        # 3) Only download metadata for the slice we need
         images = []
 
         for key in page_keys:
@@ -202,7 +191,6 @@ def get_images():
                     "uploaded_at": metadata.get("uploaded_at", 0)
                 })
             except Exception as item_error:
-                # Skip a broken entry instead of failing the whole page
                 print(f"Skipping {key}:", item_error)
 
         next_offset = offset + len(page_keys)
@@ -235,7 +223,7 @@ def ai_chat():
                 model=model_name,
                 contents=user_message,
                 config=types.GenerateContentConfig(
-                    system_instruction="You are MOVA AI, a friendly, helpful assistant for the MOVA photo-sharing community. Keep answers clear and concise (2-4 sentences unless asked for more).",
+                    system_instruction="You are MOVA AI, a friendly, helpful assistant for the MOVA photo-sharing community. Keep answers clear and concise (2-4 sentences unless asked for more). If asked about any features do not make up any; the features that we have include a page where you can upload workout progress pictures, a page where you can view other people's progress pictures, and finally a chat where they can communicate with the community (as well as this AI chat).",
                     max_output_tokens=200,
                 ),
             )
