@@ -19,7 +19,6 @@ CORS(app)
 AWS_REGION = os.getenv("AWS_REGION", "ca-central-1")
 S3_BUCKET = os.getenv("S3_BUCKET")
 
-# Allowed image formats
 ALLOWED_TYPES = {
     "image/jpeg": "jpg",
     "image/png": "png",
@@ -83,6 +82,7 @@ def upload_image():
 
         title = request.form.get("title", "").strip() or "Untitled"
         description = request.form.get("description", "")
+        username = request.form.get("username", "").strip()[:50] or "Anonymous"
 
       
         timestamp = int(time.time())
@@ -93,7 +93,6 @@ def upload_image():
         image_key = f"images/{image_id}.{extension}"
         metadata_key = f"images/{image_id}.json"
 
-        # Upload image to S3
         s3.upload_fileobj(
             file,
             S3_BUCKET,
@@ -101,15 +100,14 @@ def upload_image():
             ExtraArgs={"ContentType": content_type}
         )
 
-        # Create metadata
         metadata = {
             "title": title,
             "description": description,
+            "username": username,
             "image_key": image_key,
             "uploaded_at": timestamp
         }
 
-        # Upload metadata JSON to S3
         s3.put_object(
             Bucket=S3_BUCKET,
             Key=metadata_key,
@@ -187,6 +185,7 @@ def get_images():
                     "image_key": metadata["image_key"],
                     "title": metadata.get("title", "Untitled"),
                     "description": metadata.get("description", ""),
+                    "username": metadata.get("username"),
                     "url": image_url,
                     "uploaded_at": metadata.get("uploaded_at", 0)
                 })

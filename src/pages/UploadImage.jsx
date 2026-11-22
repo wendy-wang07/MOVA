@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { API_URL } from "../config";
+import { UserAuth } from "../context/AuthContext.jsx";
 
 export default function UploadImage() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -10,6 +11,12 @@ export default function UploadImage() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const { session } = UserAuth();
+  const username =
+  session?.user?.user_metadata?.username ||
+  session?.user?.user_metadata?.display_name ||
+  session?.user?.email?.split("@")[0]
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -57,6 +64,7 @@ export default function UploadImage() {
       formData.append("image", selectedFile);
       formData.append("title", title);
       formData.append("description", description);
+      formData.append("username", username);
 
       const response = await fetch(`${API_URL}/upload-image`, {
         method: "POST",
