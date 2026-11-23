@@ -81,7 +81,7 @@ def upload_image():
 
         title = request.form.get("title", "").strip() or "Untitled"
         description = request.form.get("description", "")
-        username = request.form.get("username", "").strip()[:50] or "Anonymous"
+        username = request.form.get("username", "").strip()[:50]
 
       
         timestamp = int(time.time())
