@@ -5,17 +5,17 @@ import os
 import time
 import json
 from dotenv import load_dotenv
-from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from biometrics import biometrics_bp, start_reader 
 
 # Load environment variables from .env
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+app.register_blueprint(biometrics_bp)
 
-# AWS configuration
 AWS_REGION = os.getenv("AWS_REGION", "ca-central-1")
 S3_BUCKET = os.getenv("S3_BUCKET")
 
@@ -30,7 +30,6 @@ MAX_IMAGE_SIZE = 5 * 1024 * 1024
 if not S3_BUCKET:
     raise ValueError("S3_BUCKET is missing from your .env file")
 
-# Connect to AWS S3
 s3 = boto3.client(
     "s3",
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -115,7 +114,6 @@ def upload_image():
             ContentType="application/json"
         )
 
-        # Generate temporary viewing URL
         url = s3.generate_presigned_url(
             ClientMethod="get_object",
             Params={"Bucket": S3_BUCKET, "Key": image_key},
@@ -233,4 +231,5 @@ def ai_chat():
     return jsonify({"reply": "MOVA AI is busy right now—please try again in a moment!"}), 503
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    start_reader()  
+    app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)

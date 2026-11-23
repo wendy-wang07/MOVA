@@ -7,6 +7,7 @@ import HomePage from "./pages/HomePage";
 import UploadImage from "./pages/UploadImage";
 import GalleryPage from "./pages/GalleryPage";
 import ChatPage from "./pages/ChatPage";
+import BiometricsPage from "./pages/BiometricsPage";
 
 export const router = createBrowserRouter([
   { path: "/signup", element: <Signup /> },
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: "share", element: <UploadImage /> },
       { path: "view", element: <GalleryPage /> },
       { path: "chat", element: <ChatPage />},
+      { path: "biometrics", element: <BiometricsPage /> },
     ],
   },
 

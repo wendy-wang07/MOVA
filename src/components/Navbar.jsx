@@ -23,6 +23,7 @@ export default function Navbar() {
       <NavLink to="/share" className={linkClass}>Share</NavLink>
       <NavLink to="/view" className={linkClass}>View</NavLink>
       <NavLink to="/chat" className={linkClass}>Chat</NavLink>
+      <NavLink to="/biometrics" className={linkClass}>Workouts</NavLink>
 
       <button type="button" className="nav-signout" onClick={handleSignOut}>
         Sign out
