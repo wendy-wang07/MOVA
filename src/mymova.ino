@@ -86,7 +86,8 @@ void resetReadings() {
 void setup() {
 
   Serial.begin(115200); // output to computer
-  while (!Serial) {}
+  unsigned long bootStart = millis();
+  while (!Serial && millis() - bootStart < 3000) {}
 
   pinMode(buttonPin, INPUT);
   pinMode(buzzerPin, OUTPUT);
