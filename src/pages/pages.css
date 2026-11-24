@@ -416,19 +416,6 @@ button.nav-link {
 }
 
 
-/* .status-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  margin-right: 8px;
-  border-radius: 50%;
-  background: #dc2626;
-} */
-/* 
-.status-dot.on {
-  background: #16a34a;
-} */
-
 .bpm-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;

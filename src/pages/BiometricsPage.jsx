@@ -45,10 +45,6 @@ export default function BiometricsPage() {
 
   const selected = workouts.find((w) => w.id === selectedId) || workouts[0];
 
-  // let status = "Device not connected";
-  // if (backendError) status = "Can't reach the backend.";
-  // else if (connected) status = "Device connected";
-
   const formatDate = (ts) => new Date(ts * 1000).toLocaleString();
 
   return (
@@ -61,7 +57,7 @@ export default function BiometricsPage() {
 
       {workouts.length === 0 && !backendError && (
         <p className="status-text">
-          No workouts yet. Plug in your MyMOVA and press its reset button to sync.
+          No workouts yet.
         </p>
       )}
 

@@ -2,13 +2,18 @@ import os
 import sqlite3
 import threading
 import time
+
 import serial
+from serial.tools import list_ports
+from dotenv import load_dotenv
 from flask import Blueprint, jsonify, request
 
-SERIAL_PORT = os.getenv("SERIAL_PORT", "COM3") 
+load_dotenv() 
+
+SERIAL_PORT = os.getenv("SERIAL_PORT", "COM3")  
 BAUD_RATE = 115200                             
 DB_FILE = "biometrics.db"
-QUIET_SECONDS = 1.5                          
+QUIET_SECONDS = 1.5                           
 MAX_SETS = 50                                  
 
 biometrics_bp = Blueprint("biometrics", __name__)
@@ -47,11 +52,11 @@ def parse_dump(values):
     n = values[0]
 
     if n == 0 and len(values) == 1:
-        return []                      
+        return []                      # device had nothing saved
 
     if n < 0 or n > MAX_SETS or len(values) != 1 + 2 * n:
-        return None                   
-    
+        return None                    # blank EEPROM, half-sent dump, etc.
+
     sets = []
     for i in range(n):
         reps = values[1 + 2 * i]
@@ -77,7 +82,7 @@ def save_session(db, sets, ts=None):
 
 def _read_loop():
     warned = False
-    db = sqlite3.connect(DB_FILE)  
+    db = sqlite3.connect(DB_FILE)  # this thread gets its own connection
 
     while True:
         try:
@@ -94,9 +99,10 @@ def _read_loop():
                         try:
                             buffer.append(int(raw))
                         except ValueError:
-                            pass      
+                            pass       # ignore anything that isn't a number
                         continue
 
+                    # Nothing arrived for QUIET_SECONDS: the dump is finished
                     if buffer:
                         sets = parse_dump(buffer)
                         if sets is None:
@@ -109,9 +115,11 @@ def _read_loop():
         except (serial.SerialException, OSError) as e:
             state["connected"] = False
             if not warned:
-                print(f"[biometrics] can't open {SERIAL_PORT}: {e}. Retrying...")
+                ports = ", ".join(p.device for p in list_ports.comports()) or "none found"
+                print(f"[biometrics] can't open {SERIAL_PORT}: {e}")
+                print(f"[biometrics] ports available right now: {ports}. Retrying...")
                 warned = True
-            time.sleep(2)           
+            time.sleep(2)              # unplugged or busy: keep retrying
 
 
 def start_reader():
@@ -120,6 +128,7 @@ def start_reader():
     if _started:
         return
     _started = True
+    print(f"[biometrics] using port {SERIAL_PORT}")
     init_db()
     threading.Thread(target=_read_loop, daemon=True).start()
 
