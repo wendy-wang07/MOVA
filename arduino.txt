@@ -13,7 +13,7 @@
 MAX30105 particleSensor;
 
 const int buttonPin = 2;
-const int buzzerPin = 3;
+const int buzzerPin = 3;  
 
 // X is in direction of USB port (lengthwise)
 // Y is in direction of broadside (widthwise)
@@ -95,7 +95,7 @@ void setup() {
   pinMode(buttonPin, INPUT);
   pinMode(buzzerPin, OUTPUT);
 
-  if (!particleSensor.begin(Wire, I2C_SPEED_STANDARD)) {
+  if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) {
     std::exit(0);
   }
 
@@ -255,7 +255,6 @@ void loop() {
     delay(50);
     noTone(buzzerPin);
     */
-
   }
 
 
@@ -269,7 +268,7 @@ void loop() {
         RTC.getTime(currentTime);
 
         display.setCursor(20, 24);
-        display.fillRect(0, 8, 128, 64, SSD1306_BLACK);
+        display.fillRect(0, 8, 128, 56, SSD1306_BLACK);
 
         display.setTextSize(3);
 
