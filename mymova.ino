@@ -86,7 +86,8 @@ void resetReadings() {
 void setup() {
 
   Serial.begin(115200); // output to computer
-  while (!Serial) {}
+  unsigned long bootStart = millis();
+  while (!Serial && millis() - bootStart < 3000) {}
 
   pinMode(buttonPin, INPUT);
   pinMode(buzzerPin, OUTPUT);
@@ -123,7 +124,7 @@ void setup() {
 
   int totalInts{1 + EEPROM.read(0) * 2};
 
-  // OUTPUT DATA
+  // OUTPUT DATA to serial
   for (int address = 0; address < totalInts * 4; address += 4) {
     int value{0};
     int zero{0};
@@ -139,7 +140,7 @@ void setup() {
 void loop() {
   button = digitalRead(buttonPin);
 
-  if (button == HIGH && lastButton == LOW) {
+  if (button == HIGH && lastButton == LOW) { // count hold time
     timeHold = true;
     buttonTimer_initial = millis();
   }
@@ -158,7 +159,7 @@ void loop() {
           trackSet = false;
           norm = 0;
 
-          if (reps > 0) {
+          if (reps > 0) { // record to EEPROM
             EEPROM.put(4 + sets * 2, reps);
             EEPROM.put(8 + sets * 2, lastBPM);
 
@@ -175,7 +176,7 @@ void loop() {
           stopwatch = millis() - stopwatch; // convert start time -> elapsed time
           stopwatchRunning = false;
 
-        } else if (!stopwatchRunning && stopwatch == 0) {
+        } else if (!stopwatchRunning && stopwatch == 0) { // run stopwatch
           stopwatch = millis();
           stopwatchRunning = true;
 
@@ -202,7 +203,7 @@ void loop() {
     buttonTimer = 0;
 
     resetReadings();
-    if (mode == 1) {
+    if (mode == 1) { // oximeter only turns on when on mode 1
       particleSensor.wakeUp();
     } else {
       particleSensor.shutDown();
@@ -221,7 +222,7 @@ void loop() {
         break;
 
       case 2:
-        firstTime = false;
+        firstTime = false; // flags if not first time
         display.print("Stopwatch");
         break;
     }
@@ -271,13 +272,13 @@ void loop() {
     case 1: {
       long irValue = particleSensor.getIR();
 
-      if (irValue < FINGER_THRESHOLD) {
+      if (irValue < FINGER_THRESHOLD) { // clear if no finger
         resetReadings();
 
       } else if (checkForBeat(irValue)) {
         long delta = millis() - lastBeat;
         lastBeat = millis();
-        float bpm = 60 / (delta / 1000.0);
+        float bpm = 60 / (delta / 1000.0); // calculate bpm
 
         if (bpm > 20 && bpm < 255) {
           rates[rateSpot++] = (byte)bpm;
@@ -303,7 +304,7 @@ void loop() {
           trackSet = false;
           norm = 0;
 
-          if (reps > 0) {
+          if (reps > 0) { // record data in EEPROM
             EEPROM.put(4 + sets * 2, reps);
             EEPROM.put(8 + sets * 2, lastBPM);
 
@@ -347,7 +348,7 @@ void loop() {
           display.print(F("Motion: "));
           display.println(static_cast<int>(std::round(norm)));
 
-        } else if (firstTime) {
+        } else if (firstTime) { // display tips only on first run
           display.println(F("\nPRESS to start"));
           display.println(F("HOLD to switch mode"));
         }
@@ -366,7 +367,7 @@ void loop() {
       unsigned int seconds = totalSec % 60;
       unsigned int centis  = (t % 1000) / 10;
 
-      char buf[16];
+      char buf[16]; // generate string of length 16
       snprintf(buf, sizeof(buf), "%02u:%02u.%02u", minutes, seconds, centis);
 
       display.setCursor(0, 4);
